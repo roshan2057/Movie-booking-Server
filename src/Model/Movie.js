@@ -10,7 +10,7 @@ const Movie = new mongoose.Schema({
     duration:String,
     imageurl:String,
     trailerurl:String,
-    showtime:{type:String, ref:'Show'}
+    showtime:[{type:String, ref:'show_time'}]
 });
 
 const Movies =mongoose.model('movies',Movie);

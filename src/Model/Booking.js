@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
-const Book = mongoose.Schema({
-    movieID:{type:String, ref:'Movie'},
+const Book =new mongoose.Schema({
+    movieID:{type:String, ref:'movies'},
     userID:{type:String, ref: 'User'},
-    seat:Array,
-    showtimeID:{type:String , ref:'showtime'}
+    seat:[{type:String}],
+    showtimeID:{type:String , ref:'show_time'}
 });
 
-export default Booking = mongoose.model('Booking',Book)
+export default  mongoose.model('Booking',Book)
