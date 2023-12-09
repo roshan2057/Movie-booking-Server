@@ -1,6 +1,9 @@
+import bcrypt from 'bcrypt';
 import Booking from "../Model/Booking.js";
 import Movies from "../Model/Movie.js";
 import Show from "../Model/Showtime.js";
+import User from "../Model/User.js";
+import { Validateemail, Validatename, Validatepassword, Validatephone } from "./Validation.js";
 
 export const listmovies = async (req, res) => {
   try {
@@ -121,11 +124,6 @@ async function getReservationData(movieID) {
   }
 }
 
-
-
-
-
-
 export const reserve = async (req, res) => {
   try {
     const save = await Booking.collection.insertOne(req.body);
@@ -136,14 +134,57 @@ export const reserve = async (req, res) => {
   }
 };
 
-export const viewbooking = async(req,res)=>{
-
-
-  try{
-    const data =await Booking.find({}).populate('movieID','title').populate('showtimeID');
-    res.send(data)
-  }catch(error){
-    console.error(error)
+export const viewbooking = async (req, res) => {
+  try {
+    const data = await Booking.find({})
+      .populate("movieID", "title")
+      .populate("showtimeID")
+      .populate("userID",'name phone')
+      .sort({ "showtimeID": 1 });
+    res.send(data);
+  } catch (error) {
+    res.status(500).send(error);
+    console.error(error);
   }
+};
+export const register = async(req, res) => {
+  try {
+    const { name, phone, email, password } = req.body;
 
+    if (!Validatename(name)) {
+      return res.status(200).send("invalid name");
+    } 
+     if (!Validateemail(email)) {
+      return res.status(200).send("invalid email");
+    } 
+    if(!Validatephone(phone)){
+      return res.status(200).send("invalid phone")
+    }
+
+    if(!Validatepassword(password)){
+      return res.status(200).send("Password weak")
+    }
+
+
+const hash = await bcrypt.hash(password,5);
+const data={
+  name,
+  phone,
+  email,
+  password:hash
 }
+
+    const save =await User.collection.insertOne(data);
+
+
+
+console.log(save)
+res.status(201).send(save);
+
+    
+
+  } catch (error) {
+    res.status(500).send(error);
+    console.error(error);
+  }
+};

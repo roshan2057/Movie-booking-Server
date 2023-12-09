@@ -1,5 +1,5 @@
 import express from "express";
-import { addmovie, addshow, listmovies, moviedetails, reserve, reserveseat, viewbooking, viewshow } from "../Controller/Usercontroller.js";
+import { addmovie, addshow, listmovies, moviedetails, register, reserve, reserveseat, viewbooking, viewshow } from "../Controller/Usercontroller.js";
 
 const router = express.Router();
 
@@ -16,6 +16,7 @@ router.get('/bookinglist',viewbooking)
 
 
 router.post('/addmovie',addmovie);
+router.post('/register',register);
 router.post('/addshow',addshow);
 router.post('/reserveseat',reserve);
 
