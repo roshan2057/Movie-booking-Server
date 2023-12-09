@@ -1,9 +1,20 @@
-import bcrypt from 'bcrypt';
+import bcrypt from "bcrypt";
+import jwt from 'jsonwebtoken';
 import Booking from "../Model/Booking.js";
 import Movies from "../Model/Movie.js";
 import Show from "../Model/Showtime.js";
 import User from "../Model/User.js";
-import { Validateemail, Validatename, Validatepassword, Validatephone } from "./Validation.js";
+import {
+  Validateemail,
+  Validatename,
+  Validatepassword,
+  Validatephone,
+} from "./Validation.js";
+
+
+const createtoken =(id)=>{
+return jwt.sign({id},process.env.jwt_key,{expiresIn: 25920});
+}
 
 export const listmovies = async (req, res) => {
   try {
@@ -59,13 +70,12 @@ export const moviedetails = async (req, res) => {
 };
 
 export const reserveseat = async (req, res) => {
-  console.log(req.params.id);
+  console.log(req.userID);
   try {
     const movieID = req.params.id;
     getReservationData(movieID)
       .then((reservation) => {
-        console.log(reservation);
-        res.send(reservation);
+        res.status(200).send(reservation);
       })
       .catch((error) => {
         console.log(error);
@@ -126,8 +136,11 @@ async function getReservationData(movieID) {
 
 export const reserve = async (req, res) => {
   try {
+    req.body.userID= req.userID
+    
+    
     const save = await Booking.collection.insertOne(req.body);
-    res.send("saved");
+    res.status(200).send("saved");
   } catch (error) {
     console.log(error);
     res.send(error);
@@ -139,52 +152,69 @@ export const viewbooking = async (req, res) => {
     const data = await Booking.find({})
       .populate("movieID", "title")
       .populate("showtimeID")
-      .populate("userID",'name phone')
-      .sort({ "showtimeID": 1 });
+      .populate("userID", "name phone")
+      .sort({ showtimeID: 1 });
     res.send(data);
   } catch (error) {
     res.status(500).send(error);
     console.error(error);
   }
 };
-export const register = async(req, res) => {
+export const register = async (req, res) => {
   try {
     const { name, phone, email, password } = req.body;
 
     if (!Validatename(name)) {
       return res.status(200).send("invalid name");
-    } 
-     if (!Validateemail(email)) {
+    }
+    if (!Validateemail(email)) {
       return res.status(200).send("invalid email");
-    } 
-    if(!Validatephone(phone)){
-      return res.status(200).send("invalid phone")
+    }
+    if (!Validatephone(phone)) {
+      return res.status(200).send("invalid phone");
     }
 
-    if(!Validatepassword(password)){
-      return res.status(200).send("Password weak")
+    if (!Validatepassword(password)) {
+      return res.status(200).send("Password weak");
     }
 
-
-const hash = await bcrypt.hash(password,5);
-const data={
-  name,
-  phone,
-  email,
-  password:hash
-}
-
-    const save =await User.collection.insertOne(data);
-
-
-
-console.log(save)
-res.status(201).send(save);
-
-    
-
+    const hash = await bcrypt.hash(password, 5);
+    const data = {
+      name,
+      phone,
+      email,
+      password: hash,
+    };
+    const save = await User.collection.insertOne(data);
+    console.log(save);
+    res.status(201).send(save);
   } catch (error) {
     res.status(500).send(error);
     console.error(error);
   }
 };
+
+
+export const login =async(req,res)=>{
+  try{
+    const{email, password} =req.body;
+    const user = await User.findOne({email:email},'password');
+
+    if(!user){
+     return res.status(200).send("User not found");
+    }
+
+    const isMatched = await bcrypt.compare(password, user.password)
+    if(!isMatched){
+      return res.send("Password Incorrect");
+    }
+
+    const token = createtoken(user.id)
+
+    res.status(200).send({token:token})
+
+  }catch(error){
+    res.status(500).send(error);
+    console.error(error)
+  }
+}

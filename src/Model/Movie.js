@@ -13,6 +13,4 @@ const Movie = new mongoose.Schema({
     showtime:[{type:String, ref:'show_time'}]
 });
 
-const Movies =mongoose.model('movies',Movie);
-
-export default Movies;
+export default mongoose.model('movies',Movie);
