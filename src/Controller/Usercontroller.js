@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import Booking from "../Model/Booking.js";
 import Movies from "../Model/Movie.js";
 import Show from "../Model/Showtime.js";
@@ -11,16 +11,15 @@ import {
   Validatephone,
 } from "./Validation.js";
 
+const createtoken = (id) => {
+  return jwt.sign({ id }, process.env.jwt_key, { expiresIn: 25920 });
+};
 
-const createtoken =(id)=>{
-return jwt.sign({id},process.env.jwt_key,{expiresIn: 25920});
-}
 
 export const listmovies = async (req, res) => {
   try {
     const movie = await Movies.find({}, "title imageurl");
-    res.send(movie);
-    console.log("ok");
+    res.status(200).send(movie);
   } catch (error) {
     res.send(error);
   }
@@ -29,8 +28,7 @@ export const listmovies = async (req, res) => {
 export const addmovie = async (req, res) => {
   try {
     await Movies.collection.insertOne(req.body.movieData);
-    res.send("ok");
-    console.log("saved");
+    res.status(200).send("Movie Saved");
   } catch (error) {
     res.send(error);
   }
@@ -39,7 +37,7 @@ export const addmovie = async (req, res) => {
 export const viewshow = async (req, res) => {
   try {
     const show = await Show.find({});
-    res.send(show);
+    res.status(200).send(show);
   } catch (error) {
     console.log(error);
   }
@@ -48,29 +46,25 @@ export const viewshow = async (req, res) => {
 export const addshow = async (req, res) => {
   try {
     await Show.collection.insertOne(req.body);
-    res.send("stored");
+    res.status(200).send("stored");
   } catch (error) {
     res.send(error);
   }
 };
 
 export const moviedetails = async (req, res) => {
-  console.log(req.params.id);
-
   try {
     const movie = await Movies.findById(
       req.params.id,
       "title director cast imageurl genre description release_date duration trailerurl"
     );
-    console.log(movie);
-    res.send(movie);
+    res.status(200).send(movie);
   } catch (error) {
     res.send(error);
   }
 };
 
 export const reserveseat = async (req, res) => {
-  console.log(req.userID);
   try {
     const movieID = req.params.id;
     getReservationData(movieID)
@@ -136,9 +130,8 @@ async function getReservationData(movieID) {
 
 export const reserve = async (req, res) => {
   try {
-    req.body.userID= req.userID
-    
-    
+    req.body.userID = req.userID;
+
     const save = await Booking.collection.insertOne(req.body);
     res.status(200).send("saved");
   } catch (error) {
@@ -194,27 +187,49 @@ export const register = async (req, res) => {
   }
 };
 
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email: email }, "password");
 
-export const login =async(req,res)=>{
-  try{
-    const{email, password} =req.body;
-    const user = await User.findOne({email:email},'password');
-
-    if(!user){
-     return res.status(200).send("User not found");
+    if (!user) {
+      return res.status(200).send("User not found");
     }
 
-    const isMatched = await bcrypt.compare(password, user.password)
-    if(!isMatched){
+    const isMatched = await bcrypt.compare(password, user.password);
+    if (!isMatched) {
       return res.send("Password Incorrect");
     }
 
-    const token = createtoken(user.id)
+    const token = createtoken(user.id);
 
-    res.status(200).send({token:token})
-
-  }catch(error){
+    res.status(200).send({ token: token });
+  } catch (error) {
     res.status(500).send(error);
-    console.error(error)
+    console.error(error);
   }
-}
+};
+
+export const profiledetails = async (req, res) => {
+  try {
+    const details = await User.findById(req.userID, "name phone email");
+
+    res.status(200).send(details);
+  } catch (error) {
+    res.send(500).send(error);
+    console.error(error);
+  }
+};
+
+export const userseatreserve = async (req, res) => {
+  try {
+    const seats = await Booking.find({ userID: req.userID })
+      .populate("movieID", "title")
+      .populate("showtimeID", "time")
+      .sort({ showtimeID: 1 });
+    res.status(200).send(seats);
+  } catch (error) {
+    res.send(500).send(error);
+    console.error(error);
+  }
+};
