@@ -15,7 +15,6 @@ const createtoken = (id) => {
   return jwt.sign({ id }, process.env.jwt_key, { expiresIn: 25920 });
 };
 
-
 export const listmovies = async (req, res) => {
   try {
     const movie = await Movies.find({}, "title imageurl");
